@@ -1,0 +1,6 @@
+.secrets
+dev.*
+credentials.json
+com.shanto.*.plist
+delete_events.py
+
