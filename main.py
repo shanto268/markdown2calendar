@@ -67,12 +67,16 @@ def process_to_do_list_for_today():
 
     return manager.calendar_api.events_added
 
+
 if __name__ == "__main__":
     try:
         events_added = process_to_do_list_for_today()
         if events_added:
             notify("To-Do List Processed", "Events added to Google Calendar")
         else:
-            notify("To-Do List Processed", "No events added to Google Calendar")
+            notify("To-Do List Processed",
+                   "No events added to Google Calendar")
     except Exception as e:
-        notify("To-Do List Processing Failed", "No time sensitive action items found in the to-do list for today")
+        notify(
+            "To-Do List Processing Failed",
+            "No time sensitive action items found in the to-do list for today")
