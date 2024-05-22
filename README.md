@@ -7,7 +7,7 @@ I use the [Zettelkasten](https://zettelkasten.de/) note-taking philosophy (and [
 - **Markdown Parsing**: Reads daily tasks from markdown files.
 - **Action Item Extraction**: Uses a local LLM (e.g., Ollama) to extract time-sensitive action items.
 - **Google Calendar Integration**: Creates events in Google Calendar based on extracted action items.
-- **Scheduled Execution**: Runs as a `launchd` service on macOS, executing the script daily at 8 PM PDT.
+- **Scheduled Execution**: Runs as a `launchd` service on macOS, executing the script daily at 12:10 AM PDT.
 
 ## Requirements
 
