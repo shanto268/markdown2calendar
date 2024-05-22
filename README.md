@@ -1,6 +1,6 @@
-# Zettelkasten To Do Lists to Google Calendar Events
+# Time Sensitive Events from Markdown To Do Lists to Google Calendar Events
 
-I use the [Zettelkasten](https://zettelkasten.de/) note-taking philosophy (and [neovim plugin](https://github.com/Furkanzmc/zettelkasten.nvim)) to plan to make daily to-do lists. I wanted to use my local llama3 model to extract time-sensitive action items from my daily to-do lists and create Google Calendar events for them. This project automates that process. It runs as a background service on macOS, using `launchd` to schedule daily execution at 12:10 AM PDT.
+I use the neovim plugins - [zettlekasten.nvim](https://github.com/Furkanzmc/zettelkasten.nvim), [nvim-telekasten.nvim](https://github.com/nvim-telekasten/telekasten.nvim) (with my custom config) - to make daily to-do lists (in `markdown` format). I wanted to use my local llama3 model to extract time-sensitive action items from my daily to-do lists and create Google Calendar events for them. This project automates that process. It runs as a background service on macOS, using `launchd` to schedule daily execution at 12:10 AM PDT.
 
 ## Features
 
