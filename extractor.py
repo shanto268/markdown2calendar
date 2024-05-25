@@ -1,6 +1,6 @@
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from langchain.chains import LLMChain
 from langchain_core.prompts import PromptTemplate
@@ -8,7 +8,7 @@ from langchain_core.prompts import PromptTemplate
 
 class ActionItemExtractor:
 
-    def __init__(self, llm, verbose=False):
+    def __init__(self, llm, verbose=True):
         prompt_template = PromptTemplate(
             input_variables=["content"],
             template=
@@ -16,7 +16,7 @@ class ActionItemExtractor:
              "from the following markdown content. "
              "{content}\n\n"
              "For each action item, provide a summary, start time, "
-             "and end time if available. If the end time is not available, use the beginning of the next event as its end time or if it is more sensible allocate a more relevant and appropriate end time (include the `by` keyword in your response)"
+             "and end time if available. If the end time is not available, use the beginning of the next event as its end time or if it is more sensible allocate a more relevant and appropriate end time. Ensure that the times are in the format HH:MM (24-hour clock) and that the start time is before the end time."
              "If a time is not specified, omit the start and end time."
              "\n\nRespond in valid JSON format with a key 'action_items', each having 'summary', 'start_time', and 'end_time' (if applicable)."
              "Absolutely do not include any additional text or comments in the response (before or after the JSON). If you do so you will be fired"
@@ -38,13 +38,9 @@ class ActionItemExtractor:
             try:
                 response_json = json.loads(json_str)
                 action_items = response_json.get('action_items', [])
-                for item in action_items:
-                    # Clean and format times
-                    if 'start_time' in item:
-                        item['start_time'] = self.format_time(
-                            item['start_time'])
-                    if 'end_time' in item:
-                        item['end_time'] = self.format_time(item['end_time'])
+                action_items = self.clean_and_format_times(action_items)
+                action_items = self.fix_missing_end_times(action_items)
+                action_items = self.filter_items_with_no_times(action_items)
                 return action_items
             except json.JSONDecodeError:
                 if self.verbose:
@@ -55,24 +51,53 @@ class ActionItemExtractor:
                 print("No JSON response found")
             return []
 
-    def format_time(self, time_str):
-        try:
-            if "by" in time_str:
-                time_str = time_str.replace('by ', '').strip()
-            else:
-                time_str = time_str.strip()
-        except:
-            pass
+    def clean_and_format_times(self, action_items):
+        for item in action_items:
+            if 'start_time' in item:
+                item['start_time'] = self.format_time(item['start_time'])
+            if 'end_time' in item:
+                item['end_time'] = self.format_time(item['end_time'])
+        return action_items
 
+    def format_time(self, time_str):
+        if not time_str or time_str.strip() == "":
+            return None
         try:
-            time_str = time_str.strip()
-            return datetime.strptime(time_str, '%I:%M %p').strftime('%H:%M')
+            return datetime.strptime(time_str.strip(),
+                                     '%I:%M %p').strftime('%H:%M')
         except ValueError:
-            if self.verbose:
-                print(f"Failed to parse time: {time_str}")
             try:
-                return datetime.strptime(time_str, '%I %p').strftime('%H:%M')
+                return datetime.strptime(time_str.strip(),
+                                         '%I %p').strftime('%H:%M')
             except ValueError:
                 if self.verbose:
-                    print(f"Failed to parse time again: {time_str}")
+                    print(f"Failed to parse time: {time_str}")
                 return None
+
+    def fix_missing_end_times(self, action_items):
+        for i in range(len(action_items) - 1):
+            current_item = action_items[i]
+            next_item = action_items[i + 1]
+
+            if current_item.get(
+                    'start_time') and not current_item.get('end_time'):
+                if next_item.get('start_time'):
+                    end_time = datetime.strptime(next_item['start_time'],
+                                                 '%H:%M')
+                    current_item['end_time'] = end_time.strftime('%H:%M')
+                else:
+                    current_item['end_time'] = (
+                        datetime.strptime(current_item['start_time'], '%H:%M')
+                        + timedelta(hours=1)).strftime('%H:%M')
+
+        # Handle the last item
+        last_item = action_items[-1]
+        if last_item.get('start_time') and not last_item.get('end_time'):
+            last_item['end_time'] = (
+                datetime.strptime(last_item['start_time'], '%H:%M') +
+                timedelta(hours=1)).strftime('%H:%M')
+
+        return action_items
+
+    def filter_items_with_no_times(self, action_items):
+        return [item for item in action_items if item.get('start_time')]

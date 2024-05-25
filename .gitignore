@@ -4,3 +4,4 @@ credentials.json
 com.shanto.*.plist
 delete_events.py
 __pycache__/*
+shanto_utils.py
